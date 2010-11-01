@@ -1,5 +1,5 @@
 ;;; -*- mode: lisp; indent-tabs: nil -*-
 
 (defpackage :ga-circles
-  (:use :cl)
+  (:use :cl :lispbuilder-sdl)
   (:export #:test))
