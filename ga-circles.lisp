@@ -3,7 +3,6 @@
 ;;; Use a genetic algorithm to find the largest possible circle that fits
 ;;; into a field of circles
 ;;;
-;;; TODO proper package set-up to use lispbuilder-sdl
 ;;; TODO create random gene
 ;;; TODO decode a gene into a circle
 ;;; TODO crossover two genes
@@ -38,7 +37,10 @@
   (bits +gene-length+))
 
 (defun test ()
-  (format t "Hello World from new project ga-circles~%"))
+  (format t "Hello World from new project ga-circles~%")
+  (let ((w (make-world)))
+    (populate-world w)
+    (display-world w)))
 
 
 ;;; World
