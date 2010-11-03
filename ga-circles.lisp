@@ -3,11 +3,11 @@
 ;;; Use a genetic algorithm to find the largest possible circle that fits
 ;;; into a field of circles
 ;;;
-;;; TODO create random gene
-;;; TODO decode a gene into a circle
+
+;;; TODO Buckland: figure out if overlapping/out of bounds random circles are 
+;;;      kept during initialization and then crossover/mutation
 ;;; TODO crossover two genes
 ;;; TODO mutate a gene
-;;; TODO calculate fitness of a gene
 ;;; TODO tournament selection of genes to cross
 ;;; TODO iterate generations
 
@@ -39,8 +39,7 @@
 (defun test ()
   (format t "Hello World from new project ga-circles~%")
   (let ((w (make-world)))
-    (populate-world w)
-    (display-world w)))
+    (populate-world w)))
 
 
 ;;; World
@@ -63,6 +62,12 @@ WORLD environment."
 	 (> (- y r) 0)
 	 (< (+ y r) (world-y-max world)))))
 
+(defun circle-no-overlap-p (circle world)
+  "Returns T if CIRCLE is completely inside the bounds of WORLD and
+does not overlap any other circle in WORLD. Returns NIL otherwise."
+  (notany #'(lambda (world-circle) (circles-intersect-p world-circle circle))
+	  (world-circles world)))
+
 (defun populate-world (w)
   "Populate the world W with the number of circles determined by
 +CIRCLE-POPULATION+."
@@ -74,12 +79,16 @@ WORLD environment."
       ; Make sure circles are completely in the bounds of the world
       ; and do not overlap any other world circle.
       (when (and (circle-in-world-p c w)
-		 (notany #'(lambda (wc) (circles-intersect-p wc c))
-			 (world-circles w)))
+		 (circle-no-overlap-p c w))
 	(push c (world-circles w))))))
         
 
 ;;; Circle
+
+(defun circle-area (circle)
+  "Return the area of CIRCLE."
+  (let ((r (circle-radius circle)))
+    (* PI r r)))
 
 (defun circle-distance-squared (circle1 circle2)
   "Returns the square of the distance between the centers of two circles."
@@ -96,23 +105,33 @@ WORLD environment."
   (<= (circle-distance circle1 circle2)
      (+ (circle-radius circle1) (circle-radius circle2))))
   
+;;; Genes
 
-;;; Graphics
+(defun random-genotype (genes &optional (bits-per-gene +gene-length+))
+  "Return a random genotype composed of GENES genes of length BITS-PER-GENE."
+  (loop for i from 1 upto (* genes bits-per-gene)
+       collect (random 2)))
 
-(defun display-world (world)
-  (sdl:with-init ()
-    (sdl:window (world-x-max world) (world-y-max world)
-		:title-caption "GA Circles"
-		:icon-caption "GA Circles")
-    (setf (sdl:frame-rate) 0)
-    (dolist (c (world-circles world))
-      (sdl:draw-filled-circle-* (circle-x c) (circle-y c) (circle-radius c)
-				:color (sdl:color :r 0 :g 0 :b 192 :a 128) 
-				:alpha 255
-				:surface sdl:*default-display*))
-    (sdl:update-display)
-    (sdl:with-events ()
-      (:quit-event () t)
-      (:video-expose-event () (sdl:update-display)))))
-		      
+(defun decode-genotype (genotype)
+  (let ((x 0)
+	(y 0)
+	(r 0))
+    (do ((i 0 (1+ i)))
+	((= i 10))
+      (setf x (+ x (* (nth i genotype) (expt 2 i)))))
+    (do ((i 0 (1+ i))
+	 (elem 10 (1+ elem)))
+	((= i 10))
+      (setf y (+ y (* (nth elem genotype) (expt 2 i)))))
+    (do ((i 0 (1+ i))
+	 (elem 20 (1+ elem)))
+	((= i 10))
+      (setf r (+ r (* (nth elem genotype) (expt 2 i)))))
+    (make-circle :x x :y y :radius r)))
 
+(defun genotype-fitness (world genotype)
+  (let ((circle (decode-genotype genotype)))
+    (cond ((not (circle-in-world-p circle world)) 0)
+	  ((not (circle-no-overlap-p circle world)) 0)
+	  (t (circle-area circle)))))
+	   

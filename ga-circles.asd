@@ -5,9 +5,8 @@
   :author "J. Bromley <jbromley@gmail.com>"
   :version "0.1"
   :description "Circle packing with a genetic algorithm"
-
+  :depends-on ()
   :serial t
-  ;; add new files to this list:
   :components ((:file "package") 
-	       (:file "ga-circles"))
-  :depends-on (lispbuilder-sdl))
+	       (:file "ga-circles" :depends-on ("package"))))
+
