@@ -13,7 +13,7 @@
 
 (in-package :ga-circles)
 
-(defparameter +gene-length+ 10 
+(defparameter +chromosome-length+ 28
   "Number of bits used to represent each characteristic")
 
 (defparameter +circle-population+ 50
@@ -32,9 +32,8 @@
 
 (defstruct world
   (circles ())
-  (x-max (expt 2 +gene-length+))
-  (y-max (expt 2 +gene-length+))
-  (bits +gene-length+))
+  (max-x 1024)
+  (max-y 1024))
 
 (defun test ()
   (format t "Hello World from new project ga-circles~%")
@@ -58,9 +57,9 @@ WORLD environment."
 	(y (circle-y circle))
 	(r (circle-radius circle)))
     (and (> (- x r) 0)
-	 (< (+ x r) (world-x-max world))
+	 (< (+ x r) (world-max-x world))
 	 (> (- y r) 0)
-	 (< (+ y r) (world-y-max world)))))
+	 (< (+ y r) (world-max-y world)))))
 
 (defun circle-no-overlap-p (circle world)
   "Returns T if CIRCLE is completely inside the bounds of WORLD and
@@ -73,8 +72,8 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
 +CIRCLE-POPULATION+."
   (do ((rs (make-random-state t)))
       ((= (length (world-circles w)) +circle-population+) w)
-    (let ((c (make-circle :x (random (world-x-max w) rs)
-			  :y (random (world-y-max w) rs)
+    (let ((c (make-circle :x (random (world-max-x w) rs)
+			  :y (random (world-max-y w) rs)
 			  :radius (random-radius))))
       ; Make sure circles are completely in the bounds of the world
       ; and do not overlap any other world circle.
@@ -105,32 +104,32 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
   (<= (circle-distance circle1 circle2)
      (+ (circle-radius circle1) (circle-radius circle2))))
   
-;;; Genes
+;;; chromosomes
 
-(defun random-genotype (genes &optional (bits-per-gene +gene-length+))
-  "Return a random genotype composed of GENES genes of length BITS-PER-GENE."
-  (loop for i from 1 upto (* genes bits-per-gene)
+(defun random-chromosome (&optional (bit-length +chromosome-length+))
+  "Return a random chromosome composed of BIT-LENGTH bits."
+  (loop for i from 1 upto bit-length
        collect (random 2)))
 
-(defun decode-genotype (genotype)
+(defun decode-chromosome (chromosome)
   (let ((x 0)
 	(y 0)
 	(r 0))
     (do ((i 0 (1+ i)))
 	((= i 10))
-      (setf x (+ x (* (nth i genotype) (expt 2 i)))))
+      (setf x (+ x (* (nth i chromosome) (expt 2 i)))))
     (do ((i 0 (1+ i))
 	 (elem 10 (1+ elem)))
 	((= i 10))
-      (setf y (+ y (* (nth elem genotype) (expt 2 i)))))
+      (setf y (+ y (* (nth elem chromosome) (expt 2 i)))))
     (do ((i 0 (1+ i))
 	 (elem 20 (1+ elem)))
-	((= i 10))
-      (setf r (+ r (* (nth elem genotype) (expt 2 i)))))
+	((= i 8))
+      (setf r (+ r (* (nth elem chromosome) (expt 2 i)))))
     (make-circle :x x :y y :radius r)))
 
-(defun genotype-fitness (world genotype)
-  (let ((circle (decode-genotype genotype)))
+(defun chromosome-fitness (world chromosome)
+  (let ((circle (decode-chromosome chromosome)))
     (cond ((not (circle-in-world-p circle world)) 0)
 	  ((not (circle-no-overlap-p circle world)) 0)
 	  (t (circle-area circle)))))

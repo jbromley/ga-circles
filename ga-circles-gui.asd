@@ -8,5 +8,6 @@
   :components
   ((:module "gui"
     :components
-    ((:file "gui")))))
+    ((:file "package")
+     (:file "gui" :depends-on ("package"))))))
   

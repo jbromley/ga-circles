@@ -1,13 +1,17 @@
-(defpackage #:ga-circles-gui
-  (:use #:cl #:ga-circles)
-  (:export
-   #:display-world))
-
 (in-package #:ga-circles-gui)
 
+(defun test ()
+  (let ((world (make-world))
+	(chromo-1 (random-chromosome))
+	(chromo-2 (random-chromosome)))
+    (populate-world world)
+    (display-world world 
+		   (decode-chromosome chromo-1) 
+		   (decode-chromosome chromo-2))))
+  
 (defun display-world (world &rest circles)
   (sdl:with-init ()
-    (sdl:window (world-x-max world) (world-y-max world)
+    (sdl:window (world-max-x world) (world-max-y world)
 		:title-caption "GA Circles"
 		:icon-caption "GA Circles")
     (setf (sdl:frame-rate) 0)
@@ -22,7 +26,6 @@
 				  :color color :alpha 255
 				  :surface sdl:*default-display*)
 	(setf color (sdl:color :r 64 :g 64 :b 64 :a 128))))
-	
     (sdl:update-display)
     (sdl:with-events ()
       (:quit-event () t)

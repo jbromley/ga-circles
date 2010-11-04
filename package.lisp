@@ -10,7 +10,11 @@
    #:circle-radius
    #:world
    #:world-circles
-   #:world-x-max
-   #:world-y-max
+   #:world-max-x
+   #:world-max-y
    #:world-bits
+   #:make-world
+   #:populate-world
+   #:random-chromosome
+   #:decode-chromosome
    #:test))
