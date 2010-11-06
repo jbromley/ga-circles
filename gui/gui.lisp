@@ -1,15 +1,12 @@
 (in-package #:ga-circles-gui)
 
 (defun test ()
-  (let ((world (make-world))
-	(chromo-1 (random-chromosome))
-	(chromo-2 (random-chromosome)))
+  (let ((world (make-world)))
     (populate-world world)
-    (display-world world 
-		   (decode-chromosome chromo-1) 
-		   (decode-chromosome chromo-2))))
+    (display-world world)))
   
-(defun display-world (world &rest circles)
+(defun display-world (world &optional (circles '()))
+  "Display the environment WORLD with the population in CIRCLES."
   (sdl:with-init ()
     (sdl:window (world-max-x world) (world-max-y world)
 		:title-caption "GA Circles"
@@ -29,4 +26,7 @@
     (sdl:update-display)
     (sdl:with-events ()
       (:quit-event () t)
+      (:key-down-event ()
+		       (when (sdl:key-down-p :sdl-key-escape)
+			 (sdl:push-quit-event)))
       (:video-expose-event () (sdl:update-display)))))
