@@ -1,6 +1,6 @@
 ;;; -*- mode: lisp; indent-tabs: nil -*-
 
-(defsystem :ga-circles
+(asdf:defsystem #:ga-circles
   :name "ga-circles"
   :author "J. Bromley <jbromley@gmail.com>"
   :version "0.1"
