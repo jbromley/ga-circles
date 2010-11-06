@@ -17,4 +17,7 @@
    #:populate-world
    #:random-chromosome
    #:decode-chromosome
+   #:mutate-chromosome
+   #:chromosome-fitness
+   #:create-population
    #:test))

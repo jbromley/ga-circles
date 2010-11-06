@@ -4,22 +4,30 @@
 ;;; into a field of circles
 ;;;
 
-;;; TODO Buckland: figure out if overlapping/out of bounds random circles are 
-;;;      kept during initialization and then crossover/mutation
-;;; TODO crossover two genes
-;;; TODO mutate a gene
 ;;; TODO tournament selection of genes to cross
 ;;; TODO iterate generations
+;;; TODO integrate with ga-circles-gui to display evolution in real-time
+;;; TODO generalize crossover-chromosomes to take more than one crossover point
+;;; TODO rewrite to be more functional
 
 (in-package :ga-circles)
 
-(defparameter +chromosome-length+ 28
+(defparameter +chromosome-length+ 29
   "Number of bits used to represent each characteristic")
 
-(defparameter +circle-population+ 50
-  "Number of circles in the environment.")
+(defparameter +world-circles+ 50
+  "Number of fixed circles in the world.")
 
-(defparameter +circle-min-radius+ 4
+(defparameter +circle-population+ 100
+  "Number of circles in the evolving population.")
+
+(defparameter +crossover-rate+ 80
+  "Probability (in percent) of crossover occurring.")
+
+(defparameter +mutation-rate+ 5
+  "Probability (in percent) of a single-bit mutation.")
+
+(defparameter +circle-min-radius+ 16
   "Minimum radius of circle in world.")
 
 (defparameter +circle-max-radius+ 128
@@ -69,9 +77,9 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
 
 (defun populate-world (w)
   "Populate the world W with the number of circles determined by
-+CIRCLE-POPULATION+."
++WORLD-CIRCLES+."
   (do ((rs (make-random-state t)))
-      ((= (length (world-circles w)) +circle-population+) w)
+      ((= (length (world-circles w)) +world-circles+) w)
     (let ((c (make-circle :x (random (world-max-x w) rs)
 			  :y (random (world-max-y w) rs)
 			  :radius (random-radius))))
@@ -106,31 +114,54 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
   
 ;;; chromosomes
 
-(defun random-chromosome (&optional (bit-length +chromosome-length+))
+(defun create-seq (start end)
+  "Create a list with the numbers from START to END inclusive."
+  (loop for i from start upto end collect i))
+
+(defun create-random-chromosome (&optional (bit-length +chromosome-length+))
   "Return a random chromosome composed of BIT-LENGTH bits."
-  (loop for i from 1 upto bit-length
-       collect (random 2)))
+  (loop for i from 1 upto bit-length collect (random 2)))
+
+(defun bits-to-integer (bits)
+  "Convert a string of bits represented as integer 1 and 0 in a list
+into an integer number. The least significant bit comes first in the
+bit sequence."
+  (let ((powers (create-seq 0 (1- (length bits)))))
+    (reduce #'+ (mapcar #'(lambda (bit power) (* bit (expt 2 power)))
+			bits powers))))
 
 (defun decode-chromosome (chromosome)
-  (let ((x 0)
-	(y 0)
-	(r 0))
-    (do ((i 0 (1+ i)))
-	((= i 10))
-      (setf x (+ x (* (nth i chromosome) (expt 2 i)))))
-    (do ((i 0 (1+ i))
-	 (elem 10 (1+ elem)))
-	((= i 10))
-      (setf y (+ y (* (nth elem chromosome) (expt 2 i)))))
-    (do ((i 0 (1+ i))
-	 (elem 20 (1+ elem)))
-	((= i 8))
-      (setf r (+ r (* (nth elem chromosome) (expt 2 i)))))
+  "Decodes CHROMOSOME into the circle represented by the
+chromosome. The x-coordinate is bits 0 through 9, the y-coordinate is
+bits 10 through 19 and the radius is bits 20 through the end."
+  (let ((x (bits-to-integer (subseq chromosome 0 10)))
+	(y (bits-to-integer (subseq chromosome 10 20)))
+	(r (bits-to-integer (subseq chromosome 20))))
     (make-circle :x x :y y :radius r)))
+
+(defun mutate-chromosome (chromosome &optional (mutation-rate +mutation-rate+))
+  "Randomly mutates the bit sequence CHROMOSOME. The probability of a
+single bit flip is MUTATION-RATE."
+  (mapcar #'(lambda (bit) (if (< (random 100) mutation-rate) 
+			      (mod (+ bit 1) 2)
+			      bit)) 
+	  chromosome))
+
+(defun crossover-chromosomes (chromo-1 chromo-2 x)
+  "Does a single-point crossover of CHROMO-1 and CHROMO-2. The
+crossover point as after X bits."
+	      (list (append (subseq chromo-1 0 x) (subseq chromo-2 x))
+		    (append (subseq chromo-2 0 x) (subseq chromo-1 x))))
 
 (defun chromosome-fitness (world chromosome)
   (let ((circle (decode-chromosome chromosome)))
     (cond ((not (circle-in-world-p circle world)) 0)
 	  ((not (circle-no-overlap-p circle world)) 0)
-	  (t (circle-area circle)))))
-	   
+	  (t (circle-radius circle)))))
+
+(defun create-population (&optional (n +circle-population+))
+  "Create a population of N chromosomes."
+  (let ((population ()))
+    (dotimes (i n)
+      (push (create-random-chromosome) population))
+    population))
