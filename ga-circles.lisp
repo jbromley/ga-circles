@@ -4,7 +4,6 @@
 ;;; into a field of circles
 ;;;
 
-;;; TODO tournament selection of genes to cross
 ;;; TODO iterate generations
 ;;; TODO integrate with ga-circles-gui to display evolution in real-time
 ;;; TODO generalize crossover-chromosomes to take more than one crossover point
@@ -47,6 +46,7 @@
   (members '())
   (total-fitness 0)
   (best-fitness 0)
+  (fitness-sums 0)
   (generation 0)
   (elites 0))
 
@@ -183,15 +183,39 @@ zero fitness."
 	(push chromo population)))))
 
 (defun create-initial-population (world &key (n +circle-population+) (elites 0))
+  "Creates an initial population of N chromosomes to live in the
+environment WORLD. Epochs will maintain ELITES most fit members. The
+population is sorted by fitness and the best and total fitness are
+calculated."
   (let* ((init-population (create-fitter-population world n))
 	 (fitness-list 
-	  (mapcar #'(lambda (chromo) (chromosome-fitness world chromo)) 
-		  init-population)))
+	  (sort (mapcar #'(lambda (chromo) (chromosome-fitness world chromo)) 
+		  init-population) #'>)))
   (make-population
    :members (sort init-population #'> 
 		  :key #'(lambda (chromo) (chromosome-fitness world chromo)))
    :total-fitness (reduce #'+ fitness-list)
    :best-fitness (apply #'max fitness-list)
+   :fitness-sums (loop for elem in fitness-list
+		    summing elem into total collect total)
    :elites elites)))
    
+(defun roulette-select (population)
+  (let* ((sums (population-fitness-sums population))
+	 (sel (random (apply #'max sums))))
+    (loop for elem in sums with index = 0
+	 do (when (> elem sel) 
+	      (return (nth index (population-members population))))
+	 (incf index))))
+
+(defun roulette-select-pair (population)
+  "Select two members of POPULATION in the environment WORLD via
+roulette-wheel selection."
+  (do ((selected '())
+       (candidate (roulette-select population) (roulette-select population)))
+      ((= (length selected) 2) selected)
+    (when (not (member candidate selected)) 
+      (push candidate selected))))
+      
+
   
