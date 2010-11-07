@@ -43,6 +43,13 @@
   (max-x 1024)
   (max-y 1024))
 
+(defstruct population
+  (members '())
+  (total-fitness 0)
+  (best-fitness 0)
+  (generation 0)
+  (elites 0))
+
 (defun test ()
   (format t "Hello World from new project ga-circles~%")
   (let ((w (make-world)))
@@ -165,3 +172,26 @@ crossover point as after X bits."
     (dotimes (i n)
       (push (create-random-chromosome) population))
     population))
+
+(defun create-fitter-population (world &optional (n +circle-population+))
+  "Create a population of N chromosomes. Ensure that no chromosome has
+zero fitness."
+  (let ((population '()))
+    (do ((chromo (create-random-chromosome) (create-random-chromosome)))
+	((= (length population) n) population)
+      (when (> (chromosome-fitness world chromo) 0)
+	(push chromo population)))))
+
+(defun create-initial-population (world &key (n +circle-population+) (elites 0))
+  (let* ((init-population (create-fitter-population world n))
+	 (fitness-list 
+	  (mapcar #'(lambda (chromo) (chromosome-fitness world chromo)) 
+		  init-population)))
+  (make-population
+   :members (sort init-population #'> 
+		  :key #'(lambda (chromo) (chromosome-fitness world chromo)))
+   :total-fitness (reduce #'+ fitness-list)
+   :best-fitness (apply #'max fitness-list)
+   :elites elites)))
+   
+  
