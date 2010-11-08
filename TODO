@@ -1,0 +1,21 @@
+TODO
+====
+
+While this project is currently successful and working, the following
+things might be interesting things to follow up on.
+
+ * Add capability to do crossovers with more than one point.
+ * Allow easier tweaking of parameters
+   - number of circles in world
+   - population size
+   - crossover and mutation rates
+ * Display algorithm information as text on graphics screen instead of
+   in the console
+ * Optimize the drawing by not always drawing the world circles
+ * Rewrite graphics portion to use straight OpenGL
+ * Add some key controls
+   - start/stop evolution
+   - restart the simulation
+   - adjust crossover and mutation rates
+
+   

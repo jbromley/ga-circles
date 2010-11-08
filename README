@@ -1,0 +1,18 @@
+GA Circles
+==========
+
+This is a genetic algorithm solution to the ``Tiddlywinks'' problem presented
+on the AI Junkie web site (http://ai-junkie.com/ga/intro). It is written in
+Lisp and uses SDL for graphics display.
+
+== Problem ==
+
+The problem is to find the largest circle that will fit into open space
+between a number of other circles in the environment. First a world is created
+with a random number of non-overlapping circles of random sizes. The algorithm
+then tries to find the largest circles that will fit in the remaining space.
+
+== Solution ==
+
+This solution uses a genetic algorithm with a binary encoding and a simple
+one-point crossovwer algorithm.
