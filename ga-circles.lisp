@@ -4,7 +4,6 @@
 ;;; into a field of circles
 ;;;
 
-;;; TODO iterate generations
 ;;; TODO integrate with ga-circles-gui to display evolution in real-time
 ;;; TODO generalize crossover-chromosomes to take more than one crossover point
 ;;; TODO rewrite to be more functional
@@ -50,11 +49,15 @@
   (generation 0)
   (elites 0))
 
-(defun test ()
-  (format t "Hello World from new project ga-circles~%")
-  (let ((w (make-world)))
-    (populate-world w)))
-
+(defun run-test (&key (num-circles 50) (pop-size 50) (iterations 25) (elites 0))
+  (format t "ga-circles~%")
+  (let ((w (create-world num-circles)))
+    (do ((i 0 (1+ i))
+	 (p (create-initial-population w :n pop-size :elites elites)
+	    (next-generation w p)))
+	((> i iterations) (list w p))
+      (format t "Generation ~a: ~a ~a~%" i (population-best-fitness p) 
+	      (population-total-fitness p)))))
 
 ;;; World
 
@@ -82,11 +85,17 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
   (notany #'(lambda (world-circle) (circles-intersect-p world-circle circle))
 	  (world-circles world)))
 
-(defun populate-world (w)
-  "Populate the world W with the number of circles determined by
-+WORLD-CIRCLES+."
+(defun create-world (&optional (n +world-circles+))
+  "Create a world and populate it with N circles. If N is not specified then
++WORLD-CIRCLES+ circles are created."
+  (let ((w (make-world)))
+    (populate-world w n)))
+
+(defun populate-world (w &optional (n +world-circles+))
+  "Populate the world W with N circles. If N is not specified then 
++WORLD-CIRCLES+ circles are created."
   (do ((rs (make-random-state t)))
-      ((= (length (world-circles w)) +world-circles+) w)
+      ((= (length (world-circles w)) n) w)
     (let ((c (make-circle :x (random (world-max-x w) rs)
 			  :y (random (world-max-y w) rs)
 			  :radius (random-radius))))
@@ -151,14 +160,18 @@ bits 10 through 19 and the radius is bits 20 through the end."
 single bit flip is MUTATION-RATE."
   (mapcar #'(lambda (bit) (if (< (random 100) mutation-rate) 
 			      (mod (+ bit 1) 2)
-			      bit)) 
+			      bit))
 	  chromosome))
 
-(defun crossover-chromosomes (chromo-1 chromo-2 x)
+(defun crossover-chromosomes (chromo-1 chromo-2 
+			      &optional (probability +crossover-rate+))
   "Does a single-point crossover of CHROMO-1 and CHROMO-2. The
 crossover point as after X bits."
-	      (list (append (subseq chromo-1 0 x) (subseq chromo-2 x))
-		    (append (subseq chromo-2 0 x) (subseq chromo-1 x))))
+  (if (< (random 100) probability)
+      (let ((x (random (length chromo-1))))
+	(list (append (subseq chromo-1 0 x) (subseq chromo-2 x))
+	      (append (subseq chromo-2 0 x) (subseq chromo-1 x))))
+      (list chromo-1 chromo-2)))
 
 (defun chromosome-fitness (world chromosome)
   (let ((circle (decode-chromosome chromosome)))
@@ -216,6 +229,52 @@ roulette-wheel selection."
       ((= (length selected) 2) selected)
     (when (not (member candidate selected)) 
       (push candidate selected))))
+
+(defun next-generation (world population)
+  "Iterate the next generation of POPULATION in the environment WORLD."
+  (let ((members (population-members population))
+	(elites (population-elites population))
+	(next-gen '()))
+    ; First do elitism.
+    (let* ((viable (count-if #'(lambda (fitness) (not (zerop fitness))) 
+			     members 
+			     :key #'(lambda (chromo) 
+				      (chromosome-fitness world chromo))))
+	   (num-elites (min viable elites)))
+      (dolist (chromo (subseq members 0 num-elites)) (push chromo next-gen)))
+    ; Now do crossovers until the new generation is full.
+    (do ((parents (roulette-select-pair population) 
+		  (roulette-select-pair population)))
+	((= +circle-population+ (length next-gen)))
+      (let ((offspring 
+	     (mapcar #'mutate-chromosome 
+		     (apply #'crossover-chromosomes parents))))
+	(dolist (chromo offspring) (push chromo next-gen))))
+    ; Calulate statistics and create the new population.
+    (let ((fitness-list 
+	   (sort (mapcar #'(lambda (chromo) (chromosome-fitness world chromo)) 
+		  next-gen) #'>)))
+      (make-population 
+       :members (sort next-gen #'> 
+		      :key (lambda (chromo) (chromosome-fitness world chromo)))
+       :total-fitness (reduce #'+ fitness-list)
+       :best-fitness (apply #'max fitness-list)
+       :fitness-sums (loop for elem in fitness-list
+			summing elem into total collect total)
+       :generation (1+ (population-generation population))
+       :elites elites))))
+
+(defun find-viable (world population)
+  "Return a list of all viable (fitness greater than 0) members of POPULATION."
+  (let ((viable-list '()))
+    (dolist (chromo (population-members population) viable-list)
+      (when (> (chromosome-fitness world chromo) 0)
+	(push chromo viable-list)))))
+	    
+
+
+    
+    
       
 
   
