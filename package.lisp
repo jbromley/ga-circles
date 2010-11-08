@@ -20,4 +20,5 @@
    #:mutate-chromosome
    #:chromosome-fitness
    #:create-population
-   #:test))
+   #:find-viable
+   #:run-test))

@@ -3,6 +3,6 @@
 (defpackage #:ga-circles-gui
   (:use #:cl #:ga-circles #:lispbuilder-sdl)
   (:export
-   #:test
+   #:gui-test
    #:display-world))
 
