@@ -9,6 +9,7 @@
    #:circle-y
    #:circle-radius
    #:world
+   #:create-world
    #:world-circles
    #:world-max-x
    #:world-max-y
@@ -19,6 +20,10 @@
    #:decode-chromosome
    #:mutate-chromosome
    #:chromosome-fitness
-   #:create-population
+   #:create-initial-population
+   #:next-generation
    #:find-viable
+   #:population-best-fitness
+   #:population-total-fitness
+   #:population-most-fit-circles
    #:run-test))

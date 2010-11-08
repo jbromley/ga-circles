@@ -4,5 +4,6 @@
   (:use #:cl #:ga-circles #:lispbuilder-sdl)
   (:export
    #:gui-test
-   #:display-world))
+   #:display-world
+   #:run))
 

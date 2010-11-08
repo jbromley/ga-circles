@@ -264,6 +264,14 @@ roulette-wheel selection."
        :generation (1+ (population-generation population))
        :elites elites))))
 
+(defun population-most-fit (population &optional (n 1))
+  "Return the N most fit members of POPULATION."
+  (subseq (population-members population) 0 n))
+
+(defun population-most-fit-circles (population &optional (n 1))
+  "Return the decoded form (circle) of the N most fit members of POPULATION." 
+  (mapcar #'decode-chromosome (population-most-fit population n)))
+
 (defun find-viable (world population)
   "Return a list of all viable (fitness greater than 0) members of POPULATION."
   (let ((viable-list '()))
