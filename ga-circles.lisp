@@ -163,15 +163,31 @@ single bit flip is MUTATION-RATE."
 			      bit))
 	  chromosome))
 
-(defun crossover-chromosomes (chromo-1 chromo-2 
-			      &optional (probability +crossover-rate+))
-  "Does a single-point crossover of CHROMO-1 and CHROMO-2. The
-crossover point as after X bits."
-  (if (< (random 100) probability)
-      (let ((x (random (length chromo-1))))
-	(list (append (subseq chromo-1 0 x) (subseq chromo-2 x))
-	      (append (subseq chromo-2 0 x) (subseq chromo-1 x))))
-      (list chromo-1 chromo-2)))
+(defun choose-crossover-points (num-pts chromo-len)
+    (do ((xover-pts '())
+	 (pt (1+ (random (1- chromo-len))) (1+ (random (1- chromo-len)))))
+	((= (length xover-pts) num-pts) (sort xover-pts #'<))
+      (when (not (member pt xover-pts))
+	(push pt xover-pts))))
+
+(defun crossover-chromosomes (parents xover-pts 
+			      &optional (prob +crossover-rate+))
+  "Cross over the two parent chromosomes in PARAENTS at the points
+indicated by XOVER-PTS with probability PROB."
+  (if (< (random 100) prob)
+      (let ((offspring-1 '())
+	    (offspring-2 '()))
+	(do* 
+	 ((index 0 (1+ index))
+	  (start 0 end)
+	  (end (nth index xover-pts) (nth index xover-pts)))
+	 ((> index (length xover-pts)) 
+	  (list (reverse offspring-1) (reverse offspring-2)))
+	  (dolist (elem (subseq (nth (mod index 2) parents) start end))
+	    (push elem offspring-1))
+	  (dolist (elem (subseq (nth (mod (1+ index) 2) parents) start end))
+	    (push elem offspring-2))))
+      parents))
 
 (defun chromosome-fitness (world chromosome)
   (let ((circle (decode-chromosome chromosome)))
@@ -244,11 +260,13 @@ roulette-wheel selection."
       (dolist (chromo (subseq members 0 num-elites)) (push chromo next-gen)))
     ; Now do crossovers until the new generation is full.
     (do ((parents (roulette-select-pair population) 
-		  (roulette-select-pair population)))
+		  (roulette-select-pair population))
+	 (xovers (choose-crossover-points 4 (length (first members)))
+		 (choose-crossover-points 4 (length (first members)))))
 	((= +circle-population+ (length next-gen)))
       (let ((offspring 
 	     (mapcar #'mutate-chromosome 
-		     (apply #'crossover-chromosomes parents))))
+		     (crossover-chromosomes parents xovers))))
 	(dolist (chromo offspring) (push chromo next-gen))))
     ; Calulate statistics and create the new population.
     (let ((fitness-list 
