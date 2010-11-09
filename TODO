@@ -4,7 +4,6 @@ TODO
 While this project is currently successful and working, the following
 things might be interesting things to follow up on.
 
- * Add capability to do crossovers with more than one point.
  * Allow easier tweaking of parameters
    - number of circles in world
    - population size
