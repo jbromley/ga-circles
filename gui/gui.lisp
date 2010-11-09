@@ -51,7 +51,7 @@
 	 (if draw-all
 	     (draw (world-circles w) 
 		   (mapcar #'decode-chromosome (find-viable w p)))
-	     (draw (world-circles w) (population-most-fit-circles p 4)))
+	     (draw (world-circles w) (population-most-fit-circles p 2)))
 	 (format t "Generation ~a: ~a ~a~%" iter (population-best-fitness p) 
 		 (population-total-fitness p))
 	 (sdl:update-display))
