@@ -39,7 +39,7 @@
 (defstruct world
   (circles ())
   (max-x 1024)
-  (max-y 1024))
+  (max-y 1024)
 
 (defstruct population
   (members '())
@@ -55,7 +55,7 @@
     (do ((i 0 (1+ i))
 	 (p (create-initial-population w :n pop-size :elites elites)
 	    (next-generation w p)))
-	((> i iterations) (list w p))
+	((= i iterations) (list w p))
       (format t "Generation ~a: ~a ~a~%" i (population-best-fitness p) 
 	      (population-total-fitness p)))))
 
@@ -292,10 +292,8 @@ roulette-wheel selection."
 
 (defun find-viable (world population)
   "Return a list of all viable (fitness greater than 0) members of POPULATION."
-  (let ((viable-list '()))
-    (dolist (chromo (population-members population) viable-list)
-      (when (> (chromosome-fitness world chromo) 0)
-	(push chromo viable-list)))))
+  (remove-if-not #'(lambda (chromo) (> (chromosome-fitness world chromo) 0))
+		 (population-members population)))
 	    
 
 
