@@ -9,9 +9,16 @@
 				:color (sdl:color :r 0 :g 0 :b 192 :a 128) 
 				:alpha 255
 				:surface sdl:*default-display*))
-    (dolist (c pop-circles)
-      (sdl:draw-filled-circle-* (circle-x c) (circle-y c) (circle-radius c)
-				:color (sdl:color :r 0 :g 255 :b 0 :a 192)
+    (let ((best-circle (first pop-circles)))
+      (sdl:draw-filled-circle-* (circle-x best-circle) 
+				(circle-y best-circle) 
+				(circle-radius best-circle)
+				:color (sdl:color :r 0 :g 255 :b 0 :a 64)
+				:alpha 255
+				:surface sdl:*default-display*))
+    (dolist (c (subseq pop-circles 1))
+      (sdl:draw-circle-* (circle-x c) (circle-y c) (circle-radius c)
+				:color (sdl:color :r 0 :g 255 :b 0 :a 64)
 				:alpha 255
 				:surface sdl:*default-display*)))
   
