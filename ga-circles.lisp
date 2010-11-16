@@ -241,7 +241,7 @@ roulette-wheel selection."
   (do ((selected '())
        (candidate (roulette-select population) (roulette-select population)))
       ((= (length selected) 2) selected)
-    (when (not (member candidate selected)) 
+    (unless (member candidate selected)
       (push candidate selected))))
 
 (defun next-generation (world population)
@@ -270,8 +270,10 @@ roulette-wheel selection."
        :members (sort next-gen #'> :key #'calc-fitness)
        :total-fitness (reduce #'+ fitness-list)
        :best-fitness (apply #'max fitness-list)
-       :fitness-sums (loop for elem in fitness-list
-			summing elem into total collect total)
+       ;; :fitness-sums (loop for fitness in fitness-list
+       ;; 			summing fitness into total collect total)
+       :fitness-sums (loop for rank from (length next-gen) downto 1
+			summing rank into total collect total)
        :generation (1+ (population-generation population))
        :elites elites)))))
 
