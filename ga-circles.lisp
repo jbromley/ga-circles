@@ -39,7 +39,7 @@
 (defstruct world
   (circles ())
   (max-x 1024)
-  (max-y 1024)
+  (max-y 1024))
 
 (defstruct population
   (members '())
@@ -85,11 +85,11 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
   (notany #'(lambda (world-circle) (circles-intersect-p world-circle circle))
 	  (world-circles world)))
 
-(defun create-world (&optional (n +world-circles+))
+(defun create-world (&optional (circles +world-circles+))
   "Create a world and populate it with N circles. If N is not specified then
 +WORLD-CIRCLES+ circles are created."
   (let ((w (make-world)))
-    (populate-world w n)))
+    (populate-world w circles)))
 
 (defun populate-world (w &optional (n +world-circles+))
   "Populate the world W with N circles. If N is not specified then 
@@ -216,18 +216,16 @@ zero fitness."
 environment WORLD. Epochs will maintain ELITES most fit members. The
 population is sorted by fitness and the best and total fitness are
 calculated."
-  (let* ((init-population (create-fitter-population world n))
-	 (fitness-list 
-	  (sort (mapcar #'(lambda (chromo) (chromosome-fitness world chromo)) 
-		  init-population) #'>)))
-  (make-population
-   :members (sort init-population #'> 
-		  :key #'(lambda (chromo) (chromosome-fitness world chromo)))
-   :total-fitness (reduce #'+ fitness-list)
-   :best-fitness (apply #'max fitness-list)
-   :fitness-sums (loop for elem in fitness-list
-		    summing elem into total collect total)
-   :elites elites)))
+  (flet ((calc-fitness (chromo) (chromosome-fitness world chromo)))
+    (let* ((init-population (create-fitter-population world n))
+	   (fitness-list (sort (mapcar #'calc-fitness init-population) #'>)))
+      (make-population
+       :members (sort init-population #'> :key #'calc-fitness)
+       :total-fitness (reduce #'+ fitness-list)
+       :best-fitness (apply #'max fitness-list)
+       :fitness-sums (loop for elem in fitness-list
+			summing elem into total collect total)
+       :elites elites))))
    
 (defun roulette-select (population)
   (let* ((sums (population-fitness-sums population))
@@ -248,39 +246,34 @@ roulette-wheel selection."
 
 (defun next-generation (world population)
   "Iterate the next generation of POPULATION in the environment WORLD."
-  (let ((members (population-members population))
-	(elites (population-elites population))
-	(next-gen '()))
-    ; First do elitism.
-    (let* ((viable (count-if #'(lambda (fitness) (not (zerop fitness))) 
-			     members 
-			     :key #'(lambda (chromo) 
-				      (chromosome-fitness world chromo))))
-	   (num-elites (min viable elites)))
-      (dolist (chromo (subseq members 0 num-elites)) (push chromo next-gen)))
-    ; Now do crossovers until the new generation is full.
+  (flet ((calc-fitness (chromo) (chromosome-fitness world chromo)))
+    (let ((members (population-members population))
+	  (elites (population-elites population))
+	  (next-gen '()))
+      ; First do elitism.
+      (let* ((viable (count-if #'(lambda (fitness) (not (zerop fitness))) 
+			       members :key #'calc-fitness))
+	     (num-elites (min viable elites)))
+	(dolist (chromo (subseq members 0 num-elites)) (push chromo next-gen)))
+	; Now do crossovers until the new generation is full.
     (do ((parents (roulette-select-pair population) 
 		  (roulette-select-pair population))
 	 (xovers (choose-crossover-points 4 (length (first members)))
 		 (choose-crossover-points 4 (length (first members)))))
 	((= +circle-population+ (length next-gen)))
-      (let ((offspring 
-	     (mapcar #'mutate-chromosome 
-		     (crossover-chromosomes parents xovers))))
+      (let ((offspring (mapcar #'mutate-chromosome 
+			       (crossover-chromosomes parents xovers))))
 	(dolist (chromo offspring) (push chromo next-gen))))
     ; Calulate statistics and create the new population.
-    (let ((fitness-list 
-	   (sort (mapcar #'(lambda (chromo) (chromosome-fitness world chromo)) 
-		  next-gen) #'>)))
+    (let ((fitness-list (sort (mapcar #'calc-fitness next-gen) #'>)))
       (make-population 
-       :members (sort next-gen #'> 
-		      :key (lambda (chromo) (chromosome-fitness world chromo)))
+       :members (sort next-gen #'> :key #'calc-fitness)
        :total-fitness (reduce #'+ fitness-list)
        :best-fitness (apply #'max fitness-list)
        :fitness-sums (loop for elem in fitness-list
 			summing elem into total collect total)
        :generation (1+ (population-generation population))
-       :elites elites))))
+       :elites elites)))))
 
 (defun population-most-fit (population &optional (n 1))
   "Return the N most fit members of POPULATION."
