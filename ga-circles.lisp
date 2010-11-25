@@ -131,28 +131,40 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
 ;;; chromosomes
 
 (defun create-seq (start end)
-  "Create a list with the numbers from START to END inclusive."
+  "Creates a list with the numbers from START to END inclusive."
   (loop for i from start upto end collect i))
 
 (defun create-random-chromosome (&optional (bit-length +chromosome-length+))
-  "Return a random chromosome composed of BIT-LENGTH bits."
+  "Returns a random chromosome composed of BIT-LENGTH bits."
   (loop for i from 1 upto bit-length collect (random 2)))
 
-(defun bits-to-integer (bits)
-  "Convert a string of bits represented as integer 1 and 0 in a list
+(defun bits-to-integer (bits &optional (accum 0) (power 1))
+  "Converts a string of bits represented as integer 1 and 0 in a list
 into an integer number. The least significant bit comes first in the
 bit sequence."
-  (let ((powers (create-seq 0 (1- (length bits)))))
-    (reduce #'+ (mapcar #'(lambda (bit power) (* bit (expt 2 power)))
-			bits powers))))
+  (if (null bits) 
+      accum
+      (bits-to-integer (rest bits) (+ accum (* power (first bits)))
+		       (* 2 power))))
+
+(defun gray-to-binary (bits &optional (accum '()) xor-bit)
+  "Converts a string of BITS represented as integer 1 and 0 in a list
+from Gray code to an integer. ACCUM holds the current result and
+XOR-BIT is the result of the xor of all bits up to the current bit."
+  (cond ((null bits) (reverse accum))
+	((endp accum) 
+	 (gray-to-binary (rest bits) (push (first bits) accum) (first bits)))
+	(t (gray-to-binary (rest bits) 
+			   (push (logxor xor-bit (first bits)) accum)
+			   (first accum)))))
 
 (defun decode-chromosome (chromosome)
   "Decodes CHROMOSOME into the circle represented by the
 chromosome. The x-coordinate is bits 0 through 9, the y-coordinate is
 bits 10 through 19 and the radius is bits 20 through the end."
-  (let ((x (bits-to-integer (subseq chromosome 0 10)))
-	(y (bits-to-integer (subseq chromosome 10 20)))
-	(r (bits-to-integer (subseq chromosome 20))))
+  (let ((x (bits-to-integer (gray-to-binary (subseq chromosome 0 10))))
+	(y (bits-to-integer (gray-to-binary (subseq chromosome 10 20))))
+	(r (bits-to-integer (gray-to-binary (subseq chromosome 20)))))
     (make-circle :x x :y y :radius r)))
 
 (defun mutate-chromosome (chromosome &optional (mutation-rate +mutation-rate+))
@@ -289,11 +301,4 @@ roulette-wheel selection."
   "Return a list of all viable (fitness greater than 0) members of POPULATION."
   (remove-if-not #'(lambda (chromo) (> (chromosome-fitness world chromo) 0))
 		 (population-members population)))
-	    
 
-
-    
-    
-      
-
-  

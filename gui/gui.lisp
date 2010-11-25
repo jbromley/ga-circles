@@ -6,10 +6,10 @@
 (defparameter +world-outline-color+ (sdl:color :r 0 :g 0 :b 255 :a 255)
   "The color of the outline of a world circle.")
 
-(defparameter +best-color+ (sdl:color :r 0 :g 128 :b 0 :a 128)
+(defparameter +best-color+ (sdl:color :r 128 :g 0 :b 0 :a 128)
   "The color of the interior of the best circle in the population.")
 
-(defparameter +best-outline-color+ (sdl:color :r 0 :g 255 :b 0 :a 255)
+(defparameter +best-outline-color+ (sdl:color :r 255 :g 0 :b 0 :a 255)
   "The color of the outline of the best circle in the population.")
 
 (defparameter +default-color+ (sdl:color :r 128 :g 128 :b 128 :a 128)
