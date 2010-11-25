@@ -4,7 +4,7 @@
   :description "GUI programs for GA circles."
   :author "J. Bromley <jbromley@gmail.com>"
   :version "0.1"
-  :depends-on (#:ga-circles #:lispbuilder-sdl)
+  :depends-on (#:ga-circles #:lispbuilder-sdl #:lispbuilder-sdl-ttf)
   :components
   ((:module "gui"
     :components
