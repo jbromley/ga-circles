@@ -270,8 +270,8 @@ roulette-wheel selection."
 	; Now do crossovers until the new generation is full.
     (do ((parents (roulette-select-pair population) 
 		  (roulette-select-pair population))
-	 (xovers (choose-crossover-points 4 (length (first members)))
-		 (choose-crossover-points 4 (length (first members)))))
+	 (xovers (choose-crossover-points 2 (length (first members)))
+		 (choose-crossover-points 2 (length (first members)))))
 	((= +circle-population+ (length next-gen)))
       (let ((offspring (mapcar #'mutate-chromosome 
 			       (crossover-chromosomes parents xovers))))
