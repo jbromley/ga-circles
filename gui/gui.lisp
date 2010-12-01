@@ -101,3 +101,49 @@ population."
 			   (sdl:push-quit-event)))
 	(:video-expose-event () (sdl:update-display))))))
     
+
+(defun draw-circle-test ()
+  (sdl:with-init ()
+    (sdl:window 640 640 :title-caption "Circle Draw" 
+		:icon-caption "Draw Circle")
+    (setf (sdl:frame-rate) 30)
+    (sdl:clear-display (sdl:color :r 0 :g 0 :b 0) :update t)
+
+    (let ((drawing nil)
+	  (first-pt '())
+	  (c nil))
+      (sdl:with-events ()
+	(:quit-event () t)
+	(:video-expose-event () (sdl:update-display))
+	(:key-down-event ()
+	 (cond
+	   ((sdl:key-pressed-p :SDL-KEY-ESCAPE)
+	    (sdl:push-quit-event))
+	   ((sdl:key-pressed-p :SDL-KEY-SPACE)
+	    (sdl:clear-display (sdl:color :r 0 :g 0 :b 0))
+	    (sdl:update-display))))
+	(:mouse-motion-event (:x x :y y :x-rel xrel :y-rel yrel)
+	 (format t "x=~a y=~a dx=~a dy=~a~%" x y xrel yrel)
+	 (cond ((and (sdl:mouse-left-p) (not drawing))
+		(format t "left mouse and not drawing~%")
+		(setf drawing t)
+		(push y first-pt)
+		(push x first-pt))
+	       ((and (sdl:mouse-left-p) drawing)
+		(format t "left mouse and drawing~%")
+		(sdl:draw-circle-* (round (/ (+ x (first first-pt)) 2))
+				   (round (/ (+ y (second first-pt)) 2))
+				   (round (/ (ga-circles::distance x y
+						       (first first-pt)
+						       (second first-pt)) 2))
+				   :color (sdl:color :r 0 :g 255 :b 0 :a 255)
+				   :alpha 255
+				   :surface sdl:*default-display*))
+	       (t 
+		(format t "reset~%")
+		(setf drawing nil)
+		(setf first-pt '())))
+	 (sdl:update-display))
+	(:idle
+	 (sdl:clear-display sdl:*black*)
+	 (sdl:update-display))))))
