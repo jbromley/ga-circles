@@ -3,11 +3,6 @@
 ;;; Use a genetic algorithm to find the largest possible circle that fits
 ;;; into a field of circles
 ;;;
-
-;;; TODO integrate with ga-circles-gui to display evolution in real-time
-;;; TODO generalize crossover-chromosomes to take more than one crossover point
-;;; TODO rewrite to be more functional
-
 (in-package :ga-circles)
 
 (defparameter +chromosome-length+ 29
@@ -42,6 +37,7 @@
   (max-y 1024))
 
 (defstruct population
+  (size 0)
   (members '())
   (total-fitness 0)
   (best-fitness 0)
@@ -49,15 +45,14 @@
   (generation 0)
   (elites 0))
 
-(defun run-test (&key (num-circles 50) (pop-size 50) (iterations 25) (elites 0))
+(defun run (&key (circles 16) (pop-size 32) (iterations 100) (elites 2))
   (format t "ga-circles~%")
-  (let ((w (create-world num-circles)))
+  (let ((w (create-world circles)))
     (do ((i 0 (1+ i))
 	 (p (create-initial-population w :n pop-size :elites elites)
 	    (next-generation w p)))
-	((= i iterations) (list w p))
-      (format t "Generation ~a: ~a ~a~%" i (population-best-fitness p) 
-	      (population-total-fitness p)))))
+	((= i iterations) p))))
+
 
 ;;; World
 
@@ -74,9 +69,9 @@ WORLD environment."
   (let ((x (circle-x circle))
 	(y (circle-y circle))
 	(r (circle-radius circle)))
-    (and (> (- x r) 0)
+    (and (> x r)
 	 (< (+ x r) (world-max-x world))
-	 (> (- y r) 0)
+	 (> y r)
 	 (< (+ y r) (world-max-y world)))))
 
 (defun circle-no-overlap-p (circle world)
@@ -113,6 +108,11 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
   (let ((r (circle-radius circle)))
     (* PI r r)))
 
+(defun distance (x1 y1 x2 y2)
+  (let ((dx (- x2 x1))
+	(dy (- y2 y1)))
+    (sqrt (+ (* dx dx) (* dy dy)))))
+
 (defun circle-distance-squared (circle1 circle2)
   "Returns the square of the distance between the centers of two circles."
   (let ((dx (- (circle-x circle1) (circle-x circle2)))
@@ -125,8 +125,10 @@ does not overlap any other circle in WORLD. Returns NIL otherwise."
   
 (defun circles-intersect-p (circle1 circle2)
   "Determines if two circles intersect."
-  (<= (circle-distance circle1 circle2)
-     (+ (circle-radius circle1) (circle-radius circle2))))
+  (let ((d-squared (circle-distance-squared circle1 circle2))
+	(max-d (+ (circle-radius circle1) (circle-radius circle2))))
+  (<= d-squared (* max-d max-d))))
+
   
 ;;; chromosomes
 
@@ -184,7 +186,7 @@ single bit flip is MUTATION-RATE."
 
 (defun crossover-chromosomes (parents xover-pts 
 			      &optional (prob +crossover-rate+))
-  "Cross over the two parent chromosomes in PARAENTS at the points
+  "Cross over the two parent chromosomes in PARENTS at the points
 indicated by XOVER-PTS with probability PROB."
   (if (< (random 100) prob)
       (let ((offspring-1 '())
@@ -207,14 +209,14 @@ indicated by XOVER-PTS with probability PROB."
 	  ((not (circle-no-overlap-p circle world)) 0)
 	  (t (circle-radius circle)))))
 
-(defun create-population (&optional (n +circle-population+))
+(defun create-chromosomes (&optional (n +circle-population+))
   "Create a population of N chromosomes."
   (let ((population ()))
     (dotimes (i n)
       (push (create-random-chromosome) population))
     population))
 
-(defun create-fitter-population (world &optional (n +circle-population+))
+(defun create-fitter-chromosomes (world &optional (n +circle-population+))
   "Create a population of N chromosomes. Ensure that no chromosome has
 zero fitness."
   (let ((population '()))
@@ -229,14 +231,17 @@ environment WORLD. Epochs will maintain ELITES most fit members. The
 population is sorted by fitness and the best and total fitness are
 calculated."
   (flet ((calc-fitness (chromo) (chromosome-fitness world chromo)))
-    (let* ((init-population (create-fitter-population world n))
+    (let* ((init-population (create-fitter-chromosomes world n))
 	   (fitness-list (sort (mapcar #'calc-fitness init-population) #'>)))
       (make-population
+       :size n
        :members (sort init-population #'> :key #'calc-fitness)
        :total-fitness (reduce #'+ fitness-list)
        :best-fitness (apply #'max fitness-list)
-       :fitness-sums (loop for elem in fitness-list
-			summing elem into total collect total)
+       :fitness-sums (loop for rank from n downto 1
+			summing rank into total collect total)
+       ;; :fitness-sums (loop for elem in fitness-list
+       ;; 			summing elem into total collect total)
        :elites elites))))
    
 (defun roulette-select (population)
@@ -260,6 +265,7 @@ roulette-wheel selection."
   "Iterate the next generation of POPULATION in the environment WORLD."
   (flet ((calc-fitness (chromo) (chromosome-fitness world chromo)))
     (let ((members (population-members population))
+	  (n (population-size population))
 	  (elites (population-elites population))
 	  (next-gen '()))
       ; First do elitism.
@@ -272,19 +278,20 @@ roulette-wheel selection."
 		  (roulette-select-pair population))
 	 (xovers (choose-crossover-points 2 (length (first members)))
 		 (choose-crossover-points 2 (length (first members)))))
-	((= +circle-population+ (length next-gen)))
+	((= (population-size population) (length next-gen)))
       (let ((offspring (mapcar #'mutate-chromosome 
 			       (crossover-chromosomes parents xovers))))
 	(dolist (chromo offspring) (push chromo next-gen))))
     ; Calulate statistics and create the new population.
     (let ((fitness-list (sort (mapcar #'calc-fitness next-gen) #'>)))
-      (make-population 
+      (make-population
+       :size n
        :members (sort next-gen #'> :key #'calc-fitness)
        :total-fitness (reduce #'+ fitness-list)
        :best-fitness (apply #'max fitness-list)
        ;; :fitness-sums (loop for fitness in fitness-list
        ;; 			summing fitness into total collect total)
-       :fitness-sums (loop for rank from (length next-gen) downto 1
+       :fitness-sums (loop for rank from n downto 1
 			summing rank into total collect total)
        :generation (1+ (population-generation population))
        :elites elites)))))

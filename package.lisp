@@ -23,8 +23,9 @@
    #:create-initial-population
    #:next-generation
    #:find-viable
+   #:population-size
    #:population-members
    #:population-best-fitness
    #:population-total-fitness
    #:population-most-fit-circles
-   #:run-test))
+   #:run))
