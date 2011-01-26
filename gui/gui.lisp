@@ -6,10 +6,10 @@
 (defparameter +world-outline-color+ (sdl:color :r 0 :g 0 :b 255 :a 255)
   "The color of the outline of a world circle.")
 
-(defparameter +best-color+ (sdl:color :r 128 :g 0 :b 0 :a 128)
+(defparameter +best-color+ (sdl:color :r 0 :g 128 :b 0 :a 128)
   "The color of the interior of the best circle in the population.")
 
-(defparameter +best-outline-color+ (sdl:color :r 255 :g 0 :b 0 :a 255)
+(defparameter +best-outline-color+ (sdl:color :r 0 :g 255 :b 0 :a 255)
   "The color of the outline of the best circle in the population.")
 
 (defparameter +default-color+ (sdl:color :r 128 :g 128 :b 128 :a 128)
@@ -20,12 +20,12 @@
 (defun draw-outlined-circle (c outline-color interior-color)
   "Draw a circle C with the outline in color OUTLINE-COLOR and the
 interior of the circle in color INTERIOR-COLOR."
-  (sdl:draw-circle-* (circle-x c) (circle-y c) (circle-radius c)
-		     :color outline-color :alpha 255
-		     :surface sdl:*default-display*)      
   (sdl:draw-filled-circle-* (circle-x c) (circle-y c) (circle-radius c)
 			    :color interior-color :alpha 255
-			    :surface sdl:*default-display*))
+			    :surface sdl:*default-display*)
+  (sdl:draw-circle-* (circle-x c) (circle-y c) (circle-radius c)
+		     :color outline-color :alpha 255
+		     :surface sdl:*default-display*))      
 
 (defun draw-circle (c color)
   "Draw the outline of the circle C using COLOR as the color."
