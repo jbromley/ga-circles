@@ -23,7 +23,7 @@
 (defparameter +circle-min-radius+ 16
   "Minimum radius of circle in world.")
 
-(defparameter +circle-max-radius+ 128
+(defparameter +circle-max-radius+ 96
   "Maximum radius of circle in world")
 
 (defstruct circle
