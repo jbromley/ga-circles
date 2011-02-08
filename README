@@ -14,5 +14,7 @@ then tries to find the largest circles that will fit in the remaining space.
 
 == Solution ==
 
-This solution uses a genetic algorithm with a binary encoding and a simple
-one-point crossovwer algorithm.
+This solution uses a genetic algorithm with a binary encoding and a
+multiple-point crossovwer algorithm. Gray codes are used in the binary
+representation of the genes.
+

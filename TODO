@@ -16,5 +16,7 @@ things might be interesting things to follow up on.
    - start/stop evolution
    - restart the simulation
    - adjust crossover and mutation rates
+ * Add a visual representation of the chromosomes to see patterns in
+   the evolution.
 
    
