@@ -83,8 +83,8 @@ population."
 	  +best-outline-color+ +best-color+)
 	 (let ((other-circles
 		(case draw-mode 
-		  (:draw-all (rest (population-members p)))
-		  (:draw-viable (rest (find-viable w p)))
+		  (:all (rest (population-members p)))
+		  (:viable (rest (find-viable w p)))
 		  (otherwise '()))))
 	   (dolist (c (mapcar #'decode-chromosome other-circles))
 	     (draw-circle c +default-color+)))
@@ -101,6 +101,8 @@ population."
 			   (sdl:push-quit-event)))
 	(:video-expose-event () (sdl:update-display))))))
     
+(defun start (args)
+  (run :circles 16 :pop-size 50 :draw-mode :draw-viable))
 
 (defun draw-circle-test ()
   (sdl:with-init ()

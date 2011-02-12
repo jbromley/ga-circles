@@ -18,10 +18,10 @@ do
 		    draw_mode=":best"
 		    ;;
 		viable)
-		    draw_mode=":draw-viable"
+		    draw_mode=":viable"
 		    ;;
 		all) 
-		    draw_mode=":draw-all"
+		    draw_mode=":all"
 		    ;;
 		*) 
 		    echo "Usage: $0 [-c circles] [-p population] [-d best|viable|all]"
