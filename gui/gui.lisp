@@ -62,8 +62,8 @@ population."
 	 (iter 0))
     (sdl:with-init ()
       ; Set up font for rendering information
-      (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
-	(error "Cannot initialize default font."))
+      ;; (unless (sdl:initialise-default-font sdl:*ttf-font-vera*)
+      ;; 	(error "Cannot initialize default font."))
       (sdl:window (world-max-x w) (world-max-y w)
 		  :title-caption "GA Circles"
 		  :icon-caption "GA Circles")
@@ -88,11 +88,11 @@ population."
 		  (otherwise '()))))
 	   (dolist (c (mapcar #'decode-chromosome other-circles))
 	     (draw-circle c +default-color+)))
-	 (sdl:draw-string-blended-* 
-	  (format nil "Generation ~a: ~a ~a" iter (population-best-fitness p) 
-		  (population-total-fitness p)) 8 992 :color sdl:*white*)
-	 ;; (format t "Generation ~a: ~a ~a~%" iter (population-best-fitness p) 
-	 ;; 	 (population-total-fitness p))
+	 ;; (sdl:draw-string-blended-* 
+	 ;;  (format nil "Generation ~a: ~a ~a" iter (population-best-fitness p) 
+	 ;; 	  (population-total-fitness p)) 8 992 :color sdl:*white*)
+	 (format t "Generation ~a: ~a ~a~%" iter (population-best-fitness p) 
+	 	 (population-total-fitness p))
 	 
 	 (sdl:update-display))
 	(:quit-event () t)
